@@ -1,0 +1,76 @@
+# =============================================================================
+# Elevation Traversability — parameters
+#
+# This package is SLAM-agnostic. Set `map_frame`, `robot_frame`, and
+# `raw_topic` to whatever your SLAM/odometry source publishes. Examples:
+#   FAST-LIO:   map_frame=camera_init   robot_frame=body          raw_topic=/cloud_registered
+#   GLIM:       map_frame=map           robot_frame=base_link     raw_topic=/glim_ros/points
+#   LIO-SAM:    map_frame=map           robot_frame=base_link     raw_topic=/lio_sam/deskew/cloud_deskewed
+# =============================================================================
+
+/**:
+  ros__parameters:
+    # --- Frames (set to match your SLAM) ---
+    map_frame: "camera_init"
+    robot_frame: "body"
+
+    # --- Input ---
+    raw_topic: "/cloud_registered"
+
+    # --- Height-band filter (rel. to robot z) ---
+    min_height_rel: -1.5
+    max_height_rel: 3.0
+    obstacle_height_diff: 0.20
+
+    # --- Grid map geometry ---
+    map_length: 40.0
+    map_resolution: 0.15
+    move_threshold: 0.30
+
+    # --- Sensor ---
+    sensor_range_limit: 60.0
+
+    # --- Robot ---
+    robot_height: 1.6
+    robot_radius: 0.40
+
+    # --- Terrain analysis radii ---
+    normal_estimation_radius: 0.45
+    smoothing_radius: 0.45
+
+    # --- Hard obstacle thresholds ---
+    slope_threshold: 35.0
+    step_threshold: 0.25
+    roughness_threshold: 0.20
+
+    # --- Traversability weights ---
+    slope_weight: 0.40
+    roughness_weight: 0.30
+    step_weight: 0.30
+    slope_critical: 0.60
+    roughness_critical: 0.35
+    step_critical: 0.30
+
+    # --- Obstacle filtering ---
+    min_obstacle_hits: 2
+    obstacle_decay_rate: 0.5
+    ground_clear_rate: 2.0
+
+    # --- Occupancy mapping ---
+    traversability_threshold: 0.3
+    min_observations: 3
+    p_occupied_when_obstacle: 0.90
+    p_occupied_when_free: 0.30
+    large_log_odds: 50.0
+    max_log_odds_for_belief: 8.0
+
+    # --- Rates ---
+    analysis_rate: 4.0
+    publish_rate: 4.0
+    publish_grid_map: true
+    publish_global: true
+    global_publish_rate: 0.5
+    global_update_every_n: 2
+
+    # --- Visualization ---
+    visualization_radius: 100.0
