@@ -12,8 +12,11 @@ YAML_OVERRIDE_KEYS = ('map_frame', 'robot_frame', 'raw_topic')
 
 def _setup(context, *_, **__):
     pkg = FindPackageShare('elevation_traversability')
-    params = PathJoinSubstitution([pkg, 'config', 'params.yaml'])
     rviz_cfg = PathJoinSubstitution([pkg, 'rviz', 'elevation_traversability.rviz'])
+
+    params_file = LaunchConfiguration('params_file').perform(context)
+    params = params_file if params_file != '' else \
+        PathJoinSubstitution([pkg, 'config', 'params.yaml'])
 
     overrides = {}
     for k in YAML_OVERRIDE_KEYS:
@@ -44,6 +47,7 @@ def _setup(context, *_, **__):
 def generate_launch_description():
     return LaunchDescription([
         DeclareLaunchArgument('rviz',        default_value='true'),
+        DeclareLaunchArgument('params_file', default_value=''),
         DeclareLaunchArgument('map_frame',   default_value=''),
         DeclareLaunchArgument('robot_frame', default_value=''),
         DeclareLaunchArgument('raw_topic',   default_value=''),

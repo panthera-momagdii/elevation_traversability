@@ -1,0 +1,12 @@
+.git
+.gitignore
+build
+install
+log
+*.tar.xz
+*.tar.gz
+*.bag
+*.db3
+*.pcd
+*.pdf
+*.gv
