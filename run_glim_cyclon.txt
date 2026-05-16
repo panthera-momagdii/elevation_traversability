@@ -1,0 +1,13 @@
+docker run -it --rm \
+  --net=host --ipc=host --pid=host \
+  --gpus all \
+  -e DISPLAY=$DISPLAY \
+  -e QT_X11_NO_MITSHM=1 \
+  -e RMW_IMPLEMENTATION=rmw_cyclonedds_cpp \
+  -v /tmp/.X11-unix:/tmp/.X11-unix \
+  -v $HOME/.Xauthority:/root/.Xauthority:rw \
+  -v /root/slam/glim/config:/glim/config \
+  koide3/glim_ros2:jazzy_cuda12.5 \
+  bash -lc "apt-get update -q >/dev/null && apt-get install -y ros-jazzy-rmw-cyclonedds-cpp >/dev/null && \
+            source /opt/ros/jazzy/setup.bash && source /root/ros2_ws/install/setup.bash && \
+            ros2 run glim_ros glim_rosnode --ros-args -p config_path:=/glim/config"

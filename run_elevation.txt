@@ -1,0 +1,5 @@
+docker run --rm -it --network host --ipc=host \
+  -e RMW_IMPLEMENTATION=rmw_cyclonedds_cpp \
+  elevation_traversability:jazzy \
+  ros2 launch elevation_traversability elevation_traversability.launch.py \
+    map_frame:=map robot_frame:=panther/os_lidar raw_topic:=/glim_ros/points rviz:=false
