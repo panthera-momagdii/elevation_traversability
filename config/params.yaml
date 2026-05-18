@@ -11,16 +11,16 @@
 /**:
   ros__parameters:
     # --- Frames (set to match your SLAM) ---
-    map_frame: "camera_init"
-    robot_frame: "body"
+    map_frame: "panther/map"
+    robot_frame: "panther/base_link"
 
     # --- Input ---
-    raw_topic: "/cloud_registered"
+    raw_topic: "/glim_ros/aligned_points"
 
     # --- Height-band filter (rel. to robot z) ---
     min_height_rel: -1.5
     max_height_rel: 3.0
-    obstacle_height_diff: 0.20
+    obstacle_height_diff: 0.30 # fix for panther simulation 
 
     # --- Grid map geometry ---
     map_length: 40.0
@@ -28,10 +28,10 @@
     move_threshold: 0.30
 
     # --- Sensor ---
-    sensor_range_limit: 60.0
+    sensor_range_limit: 40.0
 
     # --- Robot ---
-    robot_height: 1.6
+    robot_height: 0.65
     robot_radius: 0.40
 
     # --- Terrain analysis radii ---

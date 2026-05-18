@@ -598,8 +598,14 @@ private:
         const bool has_obstacle = (obst_count >= min_obstacle_hits_) &&
                                   (obst_count > gnd_count * 0.5f);
 
-        // No elevation AND no obstacle → skip entirely
-        if (!std::isfinite(e) && !has_obstacle) {
+        // No current elevation evidence → cell is UNKNOWN, never obstacle.
+        // Previously this had two branches: !isfinite(e) && !has_obstacle → unknown,
+        // and !isfinite(e) && has_obstacle → obstacle. The second branch was the
+        // source of ghost ring obstacles: obstacle_count survived in cells whose
+        // elevation had been reset to NaN (via map_.move() / circular-buffer reuse),
+        // letting stale obst_cnt > 0 lock cells at occupancy = 1 with no current
+        // LiDAR evidence supporting it. See docs/GHOST_OBSTACLES.md.
+        if (!std::isfinite(e)) {
           out_smooth(r, c) = NAN;
           out_nx(r, c)     = NAN;
           out_ny(r, c)     = NAN;
@@ -609,20 +615,6 @@ private:
           out_step(r, c)   = NAN;
           out_trav(r, c)   = NAN;
           out_occ(r, c)    = NAN;
-          continue;
-        }
-
-        // Obstacle only, no elevation
-        if (!std::isfinite(e) && has_obstacle) {
-          out_smooth(r, c) = NAN;
-          out_nx(r, c)     = NAN;
-          out_ny(r, c)     = NAN;
-          out_nz(r, c)     = NAN;
-          out_slope(r, c)  = NAN;
-          out_rough(r, c)  = NAN;
-          out_step(r, c)   = NAN;
-          out_trav(r, c)   = 0.0f;
-          out_occ(r, c)    = 1.0f;
           continue;
         }
 
@@ -726,14 +718,41 @@ private:
         cov(1,2) = cov(2,1) = syz * inv_n - my * mz;
 
         Eigen::SelfAdjointEigenSolver<Eigen::Matrix3f> eig(cov);
-        Eigen::Vector3f normal = eig.eigenvectors().col(0);
-        if (normal.z() < 0) normal = -normal;
+        const Eigen::Vector3f& eigvals = eig.eigenvalues();  // sorted ascending
+
+        // Planarity gate. The smallest eigenvector is meaningful as a surface
+        // normal ONLY when the local neighborhood is genuinely planar — i.e.
+        // when the smallest eigenvalue lam0 is well-separated from the middle
+        // eigenvalue lam1. For colinear point sets (e.g. cells along a single
+        // LiDAR ground-scan ring whose neighbors between rings are NaN), lam0
+        // and lam1 collapse to near-equal values, the smallest eigenvector
+        // becomes numerically ambiguous, and slope = acos(|normal.z|) can
+        // land anywhere — including ~90°, producing false "vertical wall"
+        // ghost obstacles along every ring. See docs/GHOST_OBSTACLES.md.
+        const float lam0 = eigvals(0);
+        const float lam1 = eigvals(1);
+        const float lam2 = eigvals(2);
+        const float kPlanarityMin = 0.05f;
+        const bool planar = (lam2 > 1e-9f) &&
+                            ((lam1 - lam0) / lam2 >= kPlanarityMin);
+
+        Eigen::Vector3f normal;
+        float slope_v;
+        if (planar) {
+          normal = eig.eigenvectors().col(0);
+          if (normal.z() < 0) normal = -normal;
+          slope_v = std::acos(std::min(std::fabs(normal.z()), 1.0f));
+        } else {
+          // Non-planar local neighborhood (line / cluster). Surface normal is
+          // ill-defined; treat the cell as locally flat for the slope path.
+          // step and roughness still apply and will catch real obstacles.
+          normal = Eigen::Vector3f::UnitZ();
+          slope_v = 0.0f;
+        }
 
         out_nx(r, c) = normal.x();
         out_ny(r, c) = normal.y();
         out_nz(r, c) = normal.z();
-
-        float slope_v = std::acos(std::min(std::fabs(normal.z()), 1.0f));
         out_slope(r, c) = slope_v;
 
         // --- Traversability + occupancy ---
